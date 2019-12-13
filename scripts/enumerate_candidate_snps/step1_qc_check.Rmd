@@ -1,0 +1,57 @@
+---
+title: "Step 1 LD Buddy List QC"
+subtitle: "Perform basic QC sanity checks to make sure the final LD buddy list makes sense"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+author: "Mike Gloudemans"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+---
+
+```{r}
+require(tidyverse)
+
+data = read_delim("output/candidate_snp_lists/ld_buddies_table_stage1.tsv", delim="\t")
+
+# How many SNPs are there for each GWAS file, including LD buddies?
+table(data$source_gwas)
+
+# Do any SNP-trait combos appear more than once in the list?
+table(table(data$source_gwas, data$snp_id))
+data[duplicated(data[c("source_gwas", "snp_id")]),]
+
+# Every R^2 value should be present
+stopifnot(sum(is.na(data$r2_with_ld_tag)) == 0)
+
+# Do we capture at least all the significant SNPs?
+table(data$source_gwas, data$source)
+system("for f in `ls data/gwas/prepared/*/*.gz`; do echo $f; zcat $f | awk '{if ($4 < 5e-8) print $0}' | wc -l; done")
+# No, we're close but we don't get all of them. Why?
+
+# Load a GWAS in for comparison
+sample_gwas = read_delim("data/gwas/prepared/Alzheimers_Lambert_2013/Alzheimers_Lambert_2013.txt.gz", delim="\t")
+sample_gwas = sample_gwas[sample_gwas$pvalue < 5e-8,]
+lambert_gwas_only = data[(data$source_gwas == "Alzheimers_Lambert_2013") & (grepl("GWAS", data$source)),]
+# Which ones aren't present in our data?
+sample_gwas[!(paste(sample_gwas$chr, sample_gwas$snp_pos, sep="_") %in% paste(lambert_gwas_only$chr, lambert_gwas_only$pos, sep="_")),]
+
+sample_gwas = read_delim("data/gwas/prepared/Alzheimers_Kunkle_2019/Alzheimers_Kunkle_2019.txt.gz", delim="\t")
+sample_gwas = sample_gwas[sample_gwas$pvalue < 5e-8,]
+lambert_gwas_only = data[(data$source_gwas == "Alzheimers_Kunkle_2019") & (grepl("GWAS", data$source)),]
+# Which ones aren't present in our data?
+sample_gwas[!(paste(sample_gwas$chr, sample_gwas$snp_pos, sep="_") %in% paste(lambert_gwas_only$chr, lambert_gwas_only$pos, sep="_")),]
+
+
+# They're from the MHC region on chromosome 6. This makes sense since we excluded this region,
+# and I think it's still reasonable to exclude this region due to its complexity, as long as we
+# acknowledge that we did this.
+
+# Every GWAS should have a non-zero number of SNPs tagged for selection by “GWAS” 
+# and “LD” criteria. All except Nalls-Chang should have “coloc” loci (I think), 
+# and Nalls-Chang lead loci should be labeled “Nalls-Chang”.
+#
+# The overall distribution of SNPs selected for the above reasons should make sense.
+table(data$source_gwas, data$source)
+```
+
