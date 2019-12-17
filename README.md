@@ -1,7 +1,8 @@
 # Alzheimers / Parkinsons Colocalization Analysis
 
 Analysis performed by Mike Gloudemans
-Updated 12/13/2019
+
+Updated 12/16/2019
 
 ## Summary
 
@@ -100,5 +101,5 @@ GTEx samples by haplotype status
 
 ## Contact
 
-For any questions about this pipeline or about the colocalization-related analyses for this project, 
+For any questions about this pipeline, obtaining specific data files, or any colocalization-related analyses for this project, 
 please contact Mike Gloudemans (mgloud@stanford.edu). I'll be glad to help you get these analyses up and running!
